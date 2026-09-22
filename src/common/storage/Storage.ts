@@ -5,6 +5,7 @@ export const StorageKeys = {
   HAPTICS_ENABLED: 'settings.haptics_enabled',
   HIGH_SCORE: 'game.high_score',
   CONTRAST_LEVEL: 'settings.lcd_contrast',
+  SNAPSHOT_STORAGE: 'game.board_snapshot'
 } as const;
 
 export const storage = createMMKV({

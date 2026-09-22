@@ -237,4 +237,22 @@ describe("SnakeEngine", () => {
       expect(engine.getState()).toBe(GameState.RUNNING);
     });
   });
+
+  describe("Snapshot Export and Restore", () => {
+    it("correctly exports and restores snapshot state", () => {
+      engine.start();
+      engine.tick();
+      engine.tick();
+
+      const snapshot = engine.exportSnapshot();
+      expect(typeof snapshot.grid).toBe("string");
+
+      const newEngine = new SnakeEngine();
+      newEngine.restoreSnapshot(snapshot);
+
+      expect(newEngine.getState()).toBe(GameState.PAUSED);
+      expect(newEngine.getScore()).toBe(engine.getScore());
+      expect(Array.from(newEngine.grid)).toEqual(Array.from(engine.grid));
+    });
+  });
 });

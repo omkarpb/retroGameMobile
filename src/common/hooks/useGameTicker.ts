@@ -4,8 +4,8 @@ import {
   useSharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { SnakeEngine } from '../engine/SnakeEngine';
-import { GameState } from '../engine/types';
+import { SnakeEngine } from '../../engine/SnakeEngine';
+import { GameState } from '../../engine/types';
  
 interface UseGameTickerOptions {
   engine: SnakeEngine;

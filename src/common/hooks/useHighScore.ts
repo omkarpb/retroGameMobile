@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SnakeEngine } from '../engine/SnakeEngine';
+import { SnakeEngine } from '../../engine/SnakeEngine';
 import {
   getHighScore,
   updateHighScore,
   resetHighScore as clearStoredScore,
-} from './HighScoreUtils';
+} from '../storage/HighScoreStorage';
 
 export const useHighScore = (engine: SnakeEngine) => {
   const [currentScore, setCurrentScore] = useState<number>(() =>

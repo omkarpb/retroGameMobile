@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions } from 'react-native';
 import { SnakeEngine } from '../engine/SnakeEngine';
-import { RetroScreen, useGameTicker, RetroGameBoyUI, useSettings, useHighScore,  } from '../common';
+import {
+  RetroScreen,
+  useGameTicker,
+  RetroGameBoyUI,
+  useSettings,
+  useHighScore,
+  useAppStateSnapshot,
+} from '../common';
 import { Direction, GameState } from '../engine/types';
 import { useEngineSoundEffects } from './useEngineSoundEffects';
 
@@ -20,7 +27,7 @@ export const SnakeHome = () => {
   const { isMuted, toggleMute } = useSettings();
   const { highScore } = useHighScore(engine);
   useEngineSoundEffects(engine, isMuted);
-
+  useAppStateSnapshot(engine);
   useEffect(() => {
     // engine.start();
 
@@ -53,7 +60,10 @@ export const SnakeHome = () => {
   return (
     <RetroGameBoyUI
       score={engine.getScore()}
-      isPaused={engine.getState() === GameState.PAUSED || engine.getState() === GameState.GAME_OVER}
+      isPaused={
+        engine.getState() === GameState.PAUSED ||
+        engine.getState() === GameState.GAME_OVER
+      }
       onTogglePause={() => {
         if (engine.getState() === GameState.PAUSED) {
           engine.start();

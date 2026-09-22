@@ -30,3 +30,13 @@ export type EngineEvent =
   | { type: 'STATE_CHANGED'; state: GameState };
  
 export type EventListener = (event: EngineEvent) => void;
+
+export interface EngineSnapshot {
+  grid: string; // Base64 representation of the 400-byte Uint8Array
+  currentDirection: Direction;
+  score: number;
+  snakeLength: number;
+  headPtr: number;
+  tailPtr: number;
+  snakeQueue: number[]; // Serialized ring buffer indices
+}

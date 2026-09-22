@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { StorageKeys, storage } from './Storage';
+import { StorageKeys, storage } from '../storage/Storage';
   
 export const useSettings = () => {
   const [isMuted, setIsMuted] = useState<boolean>(() => {
