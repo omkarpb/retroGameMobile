@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import { SnakeEngine } from '../engine/SnakeEngine';
 import { AudioSynthesizer } from '../common/AudioSynthesizer';
 
-export const useEngineSoundEffects = (engine: SnakeEngine, isMuted: boolean) => {
+export const useEngineSoundEffects = (
+  engine: SnakeEngine,
+  isMuted: boolean,
+) => {
   const audioRef = useRef<AudioSynthesizer | null>(null);
   if (!audioRef.current) {
     audioRef.current = new AudioSynthesizer();
@@ -12,7 +15,7 @@ export const useEngineSoundEffects = (engine: SnakeEngine, isMuted: boolean) => 
     const audio = audioRef.current;
     if (!audio) return;
 
-    const unsubscribe = engine.subscribe((event) => {
+    const unsubscribe = engine.subscribe(event => {
       if (isMuted) return;
 
       switch (event.type) {

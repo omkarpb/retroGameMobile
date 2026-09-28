@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SnakeEngine } from "./SnakeEngine";
+import { SnakeEngine } from './SnakeEngine';
 import {
   CellType,
   Direction,
   GameState,
   GRID_SIZE,
   TOTAL_CELLS,
-} from "./types";
+} from './types';
 
-describe("SnakeEngine", () => {
+describe('SnakeEngine', () => {
   let engine: SnakeEngine;
 
   beforeEach(() => {
@@ -20,8 +19,8 @@ describe("SnakeEngine", () => {
     return engine.grid[y * GRID_SIZE + x];
   };
 
-  describe("Initialization", () => {
-    it("initializes grid with 3 segments and 1 food item", () => {
+  describe('Initialization', () => {
+    it('initializes grid with 3 segments and 1 food item', () => {
       expect(engine.getState()).toBe(GameState.IDLE);
       expect(engine.getScore()).toBe(0);
 
@@ -38,7 +37,7 @@ describe("SnakeEngine", () => {
       expect(foodCount).toBe(1);
     });
 
-    it("does not advance simulation when IDLE or PAUSED", () => {
+    it('does not advance simulation when IDLE or PAUSED', () => {
       engine.tick();
       // Snake head should still be at (10, 10)
       expect(getCell(10, 10)).toBe(CellType.HEAD);
@@ -50,8 +49,8 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Movement and Progression", () => {
-    it("moves snake forward by one cell per tick when RUNNING", () => {
+  describe('Movement and Progression', () => {
+    it('moves snake forward by one cell per tick when RUNNING', () => {
       engine.start();
       engine.tick();
 
@@ -64,8 +63,8 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Torus Screen Wraparound (No Wall Death)", () => {
-    it("wraps around right edge to left edge (x: 19 -> 0)", () => {
+  describe('Torus Screen Wraparound (No Wall Death)', () => {
+    it('wraps around right edge to left edge (x: 19 -> 0)', () => {
       engine.start();
       // Snake starts at x=10 heading RIGHT; tick 9 times to reach x=19
       for (let i = 0; i < 9; i++) {
@@ -79,7 +78,7 @@ describe("SnakeEngine", () => {
       expect(engine.getState()).toBe(GameState.RUNNING);
     });
 
-    it("wraps around left edge to right edge (x: 0 -> 19)", () => {
+    it('wraps around left edge to right edge (x: 0 -> 19)', () => {
       engine.start();
       engine.enqueueDirection(Direction.UP);
       engine.tick(); // at (10, 9)
@@ -98,7 +97,7 @@ describe("SnakeEngine", () => {
       expect(engine.getState()).toBe(GameState.RUNNING);
     });
 
-    it("wraps around top edge to bottom edge (y: 0 -> 19)", () => {
+    it('wraps around top edge to bottom edge (y: 0 -> 19)', () => {
       engine.start();
       engine.enqueueDirection(Direction.UP);
 
@@ -114,7 +113,7 @@ describe("SnakeEngine", () => {
       expect(engine.getState()).toBe(GameState.RUNNING);
     });
 
-    it("wraps around bottom edge to top edge (y: 19 -> 0)", () => {
+    it('wraps around bottom edge to top edge (y: 19 -> 0)', () => {
       engine.start();
       engine.enqueueDirection(Direction.DOWN);
 
@@ -131,8 +130,8 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Input Queue & Reversal Guard", () => {
-    it("ignores immediate 180-degree reversal input", () => {
+  describe('Input Queue & Reversal Guard', () => {
+    it('ignores immediate 180-degree reversal input', () => {
       engine.start();
       // Moving RIGHT; attempting LEFT must be rejected
       const accepted = engine.enqueueDirection(Direction.LEFT);
@@ -143,7 +142,7 @@ describe("SnakeEngine", () => {
       expect(getCell(11, 10)).toBe(CellType.HEAD);
     });
 
-    it("buffers rapid consecutive turns without self-collision", () => {
+    it('buffers rapid consecutive turns without self-collision', () => {
       engine.start(); // Heading RIGHT at (10, 10)
 
       // Buffer two turns within the same tick interval
@@ -167,13 +166,13 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Food Consumption and Growth", () => {
-    it("grows snake and increments score upon eating food", () => {
+  describe('Food Consumption and Growth', () => {
+    it('grows snake and increments score upon eating food', () => {
       engine.start();
       // Place food directly in front of the snake at (11, 10)
       engine.grid[10 * GRID_SIZE + 11] = CellType.FOOD;
 
-      const listener = vi.fn();
+      const listener = jest.fn();
       engine.subscribe(listener);
 
       engine.tick();
@@ -185,7 +184,7 @@ describe("SnakeEngine", () => {
 
       expect(listener).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: "FOOD_EATEN",
+          type: 'FOOD_EATEN',
           score: 10,
           headIndex: 10 * GRID_SIZE + 11,
         }),
@@ -193,8 +192,8 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Self-Collision", () => {
-    it("triggers GAME_OVER on self-collision", () => {
+  describe('Self-Collision', () => {
+    it('triggers GAME_OVER on self-collision', () => {
       engine.start();
       // Grow snake long enough to run into itself
       // Force segments manually: (10,10) -> (10,11) -> (9,11) -> (9,10)
@@ -208,7 +207,7 @@ describe("SnakeEngine", () => {
       // Force food eating so body length does not shed tail
       engine.grid[10 * GRID_SIZE + 10] = CellType.BODY;
 
-      const listener = vi.fn();
+      const listener = jest.fn();
       engine.subscribe(listener);
 
       // Turn RIGHT into cell (10,10) which contains BODY
@@ -217,12 +216,12 @@ describe("SnakeEngine", () => {
 
       expect(engine.getState()).toBe(GameState.GAME_OVER);
       expect(listener).toHaveBeenCalledWith({
-        type: "COLLISION",
-        cause: "SELF",
+        type: 'COLLISION',
+        cause: 'SELF',
       });
     });
 
-    it("does not trigger collision when moving into the vacating tail tile", () => {
+    it('does not trigger collision when moving into the vacating tail tile', () => {
       engine.start();
       // A 4-segment loop moving directly into the tail tip vacating on that tick
       // should remain safe since the tail moves forward simultaneously
@@ -238,14 +237,14 @@ describe("SnakeEngine", () => {
     });
   });
 
-  describe("Snapshot Export and Restore", () => {
-    it("correctly exports and restores snapshot state", () => {
+  describe('Snapshot Export and Restore', () => {
+    it('correctly exports and restores snapshot state', () => {
       engine.start();
       engine.tick();
       engine.tick();
 
       const snapshot = engine.exportSnapshot();
-      expect(typeof snapshot.grid).toBe("string");
+      expect(typeof snapshot.grid).toBe('string');
 
       const newEngine = new SnakeEngine();
       newEngine.restoreSnapshot(snapshot);
@@ -253,6 +252,109 @@ describe("SnakeEngine", () => {
       expect(newEngine.getState()).toBe(GameState.PAUSED);
       expect(newEngine.getScore()).toBe(engine.getScore());
       expect(Array.from(newEngine.grid)).toEqual(Array.from(engine.grid));
+    });
+  });
+
+  describe('Status Text', () => {
+    it('returns the correct label for each game state', () => {
+      expect(engine.getStatusText()).toBe('PRESS START TO GET STARTED!');
+
+      engine.start();
+      expect(engine.getStatusText()).toBe('RUNNING');
+
+      engine.pause();
+      expect(engine.getStatusText()).toBe('PAUSED');
+
+      engine.start();
+      // Force a collision to reach GAME_OVER
+      engine.enqueueDirection(Direction.DOWN);
+      engine.tick();
+      engine.enqueueDirection(Direction.LEFT);
+      engine.tick();
+      engine.enqueueDirection(Direction.UP);
+      engine.tick();
+      engine.grid[10 * GRID_SIZE + 10] = CellType.BODY;
+      engine.enqueueDirection(Direction.RIGHT);
+      engine.tick();
+      expect(engine.getStatusText()).toBe(
+        'GAME OVER! PRESS START TO GET PLAY AGAIN!',
+      );
+    });
+  });
+
+  describe('Fidget Mode', () => {
+    // Locate the single HEAD cell in the grid
+    const findHeadIndex = (e: SnakeEngine): number => {
+      return e.grid.indexOf(CellType.HEAD);
+    };
+
+    it('initializes with 15 segments instead of 3', () => {
+      const fidgetEngine = new SnakeEngine(true);
+
+      let segmentCount = 0;
+      for (let i = 0; i < TOTAL_CELLS; i++) {
+        if (
+          fidgetEngine.grid[i] === CellType.BODY ||
+          fidgetEngine.grid[i] === CellType.HEAD
+        ) {
+          segmentCount++;
+        }
+      }
+      expect(segmentCount).toBe(15);
+    });
+
+    it('does not increment score when eating food', () => {
+      const fidgetEngine = new SnakeEngine(true);
+      fidgetEngine.start();
+
+      const headIndex = findHeadIndex(fidgetEngine);
+      const headX = headIndex % GRID_SIZE;
+      const headY = (headIndex / GRID_SIZE) | 0;
+      const nextIndex = headY * GRID_SIZE + ((headX + 1) % GRID_SIZE);
+
+      fidgetEngine.grid[nextIndex] = CellType.FOOD;
+      fidgetEngine.tick();
+
+      expect(fidgetEngine.getScore()).toBe(0);
+    });
+
+    it('emits a COLLISION event but stays RUNNING on self-collision', () => {
+      const fidgetEngine = new SnakeEngine(true);
+      fidgetEngine.start();
+
+      const headIndex = findHeadIndex(fidgetEngine);
+      const headX = headIndex % GRID_SIZE;
+      const headY = (headIndex / GRID_SIZE) | 0;
+      const nextIndex = headY * GRID_SIZE + ((headX + 1) % GRID_SIZE);
+
+      // Place a body block directly in the snake's path
+      fidgetEngine.grid[nextIndex] = CellType.BODY;
+
+      const listener = jest.fn();
+      fidgetEngine.subscribe(listener);
+      fidgetEngine.tick();
+
+      expect(listener).toHaveBeenCalledWith({
+        type: 'COLLISION',
+        cause: 'SELF',
+      });
+      expect(fidgetEngine.getState()).toBe(GameState.RUNNING);
+    });
+
+    it('applies fidget behavior after setFidgetMode(true) + reset()', () => {
+      engine.setFidgetMode(true);
+      engine.reset();
+
+      let segmentCount = 0;
+      for (let i = 0; i < TOTAL_CELLS; i++) {
+        if (
+          engine.grid[i] === CellType.BODY ||
+          engine.grid[i] === CellType.HEAD
+        ) {
+          segmentCount++;
+        }
+      }
+      expect(segmentCount).toBe(15);
     });
   });
 });

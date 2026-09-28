@@ -1,3 +1,3 @@
-export * from './HighScoreStorage'
-export * from './BoardSnapshotStorage'
-export * from './Storage'
+export * from './HighScoreStorage';
+export * from './BoardSnapshotStorage';
+export * from './Storage';

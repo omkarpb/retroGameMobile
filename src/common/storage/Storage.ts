@@ -5,11 +5,11 @@ export const StorageKeys = {
   HAPTICS_ENABLED: 'settings.haptics_enabled',
   HIGH_SCORE: 'game.high_score',
   CONTRAST_LEVEL: 'settings.lcd_contrast',
-  SNAPSHOT_STORAGE: 'game.board_snapshot'
+  SNAPSHOT_STORAGE: 'game.board_snapshot',
+  FIDGET_MODE_ON: 'settings.fidget_mode_on',
 } as const;
 
 export const storage = createMMKV({
   id: 'pocket-brick-storage',
   // encryptionKey: 'optional-encryption-key',
 });
- 

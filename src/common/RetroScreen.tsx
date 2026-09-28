@@ -43,6 +43,7 @@ export const RetroScreen = ({
   );
   const prevTexture = useMemo(
     () => makeTexture(prevBufferRef.current),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentBuffer],
   );
 

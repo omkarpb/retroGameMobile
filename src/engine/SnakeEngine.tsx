@@ -37,7 +37,7 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 }
 
 function base64ToUint8Array(base64: string): Uint8Array {
-  const clean = base64.replace(/=+$/, '');
+  const clean = base64.replace(/[=]+$/, '');
   const len = clean.length;
   const byteLen = Math.floor((len * 3) / 4);
   const bytes = new Uint8Array(byteLen);
@@ -71,6 +71,9 @@ export class SnakeEngine {
   private tailPtr: number = 0;
   private snakeLength: number = 0;
 
+  // Tracks how many snake segments occupy each cell (for overlapping fidget-mode collisions)
+  private readonly cellOccupancy: Uint16Array = new Uint16Array(TOTAL_CELLS);
+
   // Input queue buffer: max size of 2 to handle rapid consecutive turns
   private readonly inputQueue: Direction[] = [];
   private currentDirection: Direction = Direction.RIGHT;
@@ -78,16 +81,28 @@ export class SnakeEngine {
   private state: GameState = GameState.IDLE;
   private score: number = 0;
   private listeners: EventListener[] = [];
+  private fidgetMode: boolean = false;
 
-  constructor() {
+  constructor(fidgetMode: boolean = false) {
+    this.fidgetMode = fidgetMode;
     this.reset();
   }
 
   /**
-   * Resets the board and places a 3-segment snake in the center heading Right.
+   * Set fidget mode on/off. When fidget mode is on, snake starts with length 10
+   * and collisions don't trigger game over.
+   */
+  public setFidgetMode(enabled: boolean): void {
+    this.fidgetMode = enabled;
+  }
+
+  /**
+   * Resets the board and places a snake in the center heading Right.
+   * In fidget mode, snake length is 10. Otherwise, it's 3.
    */
   public reset(): void {
     this.grid.fill(CellType.EMPTY);
+    this.cellOccupancy.fill(0);
     this.inputQueue.length = 0;
     this.headPtr = 0;
     this.tailPtr = 0;
@@ -95,19 +110,21 @@ export class SnakeEngine {
     this.score = 0;
     this.currentDirection = Direction.RIGHT;
 
-    // Initial snake body at (8,10), (9,10), (10,10)
+    // In fidget mode, create a 10-segment snake; otherwise 3-segment
+    const snakeLength = this.fidgetMode ? 15 : 3;
     const startY = 10;
-    const initialSegments = [
-      this.coordsToIndex(8, startY),
-      this.coordsToIndex(9, startY),
-      this.coordsToIndex(10, startY),
-    ];
+    const initialSegments: number[] = [];
+
+    for (let i = 0; i < snakeLength; i++) {
+      initialSegments.push(this.coordsToIndex(8 + i, startY));
+    }
 
     for (let i = 0; i < initialSegments.length; i++) {
       const idx = initialSegments[i];
       const isHead = i === initialSegments.length - 1;
       this.grid[idx] = isHead ? CellType.HEAD : CellType.BODY;
       this.snakeQueue[this.headPtr] = idx;
+      this.cellOccupancy[idx]++;
       this.headPtr = (this.headPtr + 1) % TOTAL_CELLS;
       this.snakeLength++;
     }
@@ -160,7 +177,6 @@ export class SnakeEngine {
    * Fixed-interval simulation tick. Call this every 100ms-150ms.
    */
   public tick(): void {
-    console.log('this.state', this.state);
     if (this.state !== GameState.RUNNING) return;
 
     // 1. Consume next buffered input
@@ -197,8 +213,13 @@ export class SnakeEngine {
     const isEating = targetCell === CellType.FOOD;
 
     if (targetCell === CellType.BODY && (isEating || nextIndex !== tailIndex)) {
-      this.triggerGameOver('SELF');
-      return;
+      // In fidget mode, collisions don't trigger game over; just emit event
+      if (!this.fidgetMode) {
+        this.triggerGameOver('SELF');
+        return;
+      }
+      // In fidget mode, emit collision event but continue
+      this.emit({ type: 'COLLISION', cause: 'SELF' });
     }
 
     // 5. Update old head to standard body segment
@@ -207,11 +228,15 @@ export class SnakeEngine {
     // 6. Advance head in ring buffer
     this.snakeQueue[this.headPtr] = nextIndex;
     this.headPtr = (this.headPtr + 1) % TOTAL_CELLS;
+    this.cellOccupancy[nextIndex]++;
     this.grid[nextIndex] = CellType.HEAD;
 
     // 7. Handle eating food or popping the tail
     if (isEating) {
-      this.score += 10;
+      // Only increment score in normal mode, not in fidget mode
+      if (!this.fidgetMode) {
+        this.score += 10;
+      }
       this.snakeLength++;
       this.emit({
         type: 'FOOD_EATEN',
@@ -220,8 +245,12 @@ export class SnakeEngine {
       });
       this.spawnFood();
     } else {
-      // Free the tail segment
-      this.grid[tailIndex] = CellType.EMPTY;
+      // Free the tail segment (only clear grid if no other segments occupy this cell)
+      this.cellOccupancy[tailIndex]--;
+      if (tailIndex !== nextIndex) {
+        this.grid[tailIndex] =
+          this.cellOccupancy[tailIndex] > 0 ? CellType.BODY : CellType.EMPTY;
+      }
       this.tailPtr = (this.tailPtr + 1) % TOTAL_CELLS;
     }
 
@@ -255,13 +284,19 @@ export class SnakeEngine {
       this.snakeQueue[i] = snapshot.snakeQueue[i];
     }
 
+    // Rebuild cellOccupancy from restored ring buffer
+    this.cellOccupancy.fill(0);
+    for (let i = 0; i < this.snakeLength; i++) {
+      const ptr = (this.tailPtr + i) % TOTAL_CELLS;
+      this.cellOccupancy[this.snakeQueue[ptr]]++;
+    }
+
     this.setState(GameState.PAUSED); // Keep paused on restore
   }
 
   // --- Helpers & State Transitions ---
 
   public start(): void {
-    console.log('on start', this.state);
     if (this.state === GameState.IDLE || this.state === GameState.PAUSED) {
       this.setState(GameState.RUNNING);
     }

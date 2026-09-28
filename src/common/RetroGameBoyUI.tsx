@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Direction } from '../engine/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronUp, ChevronLeft, ChevronRight, ChevronDown, SlidersHorizontal } from 'lucide-react-native';
+import {
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Vibrate,
+  VibrateOff,
+  Info,
+} from 'lucide-react-native';
 
 interface RetroGameUIProps {
   score: number;
@@ -12,12 +24,14 @@ interface RetroGameUIProps {
   onMove: (dir: Direction) => void;
   statusText: string;
   handleOptionsPress: () => void;
-  isMuted: boolean,
-  toggleMute: () => void,
+  isMuted: boolean;
+  toggleMute: () => void;
+  toggleHaptics: () => void;
+  hapticsEnabled: boolean;
+  toggleFidgetMode: () => void;
+  isFidgetEnabled: boolean;
   children: React.ReactNode; // Skia Canvas / Retro Screen[span_1](start_span)[span_1](end_span)[span_2](start_span)[span_2](end_span)
 }
-const ICON_SIZE = 20;
-const ICON_COLOR = '#b5b4ba';
 export const RetroGameBoyUI = ({
   score,
   highScore,
@@ -28,8 +42,28 @@ export const RetroGameBoyUI = ({
   handleOptionsPress,
   isMuted,
   toggleMute,
+  toggleHaptics,
+  hapticsEnabled,
+  toggleFidgetMode,
+  isFidgetEnabled,
   children,
 }: RetroGameUIProps) => {
+  const [ledBlink, setLedBlink] = useState(true);
+
+  useEffect(() => {
+    if (isPaused) {
+      setLedBlink(true); // LED stays on when paused
+      return;
+    }
+
+    // Blink LED when playing
+    const interval = setInterval(() => {
+      setLedBlink(prev => !prev);
+    }, 500); // Blink every 500ms
+
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
   return (
     <SafeAreaView style={styles.outerShell}>
       {/* 1. Header Branded Strip */}
@@ -50,20 +84,15 @@ export const RetroGameBoyUI = ({
         {/* Status control */}
         <View style={styles.statusControlRow}>
           <View style={styles.status}>
-            <View style={styles.ledLight} />
+            <View
+              style={[styles.ledLight, !ledBlink && styles.ledLightDimmed]}
+            />
             <Text style={styles.batteryText}>{statusText}</Text>
           </View>
           <View style={styles.optionControls}>
             <TouchableOpacity onPress={handleOptionsPress}>
-              <SlidersHorizontal color={ICON_COLOR} size={ICON_SIZE} />
+              <Info color="#b5b4ba" size={20} />
             </TouchableOpacity>
-            {/* <TouchableOpacity onPress={onTogglePause}>
-              {isPaused ? (
-                <Play size={ICON_SIZE} color={ICON_COLOR} />
-              ) : (
-                <Pause size={ICON_SIZE} color={ICON_COLOR} />
-              )}
-            </TouchableOpacity> */}
           </View>
         </View>
 
@@ -71,11 +100,15 @@ export const RetroGameBoyUI = ({
         <View style={styles.lcdWindow}>
           {/* Top LCD Stats Bar */}
           <View style={styles.statsBar}>
-            <Text style={styles.lcdText}>
+            <Text
+              style={[styles.lcdText, isFidgetEnabled && styles.lcdTextDimmed]}
+            >
               SCORE {String(score).padStart(5, '0')}
             </Text>
-            <Text style={styles.lcdText}>
-              HIGH SCORE {String(highScore).padStart(5, '0')}
+            <Text
+              style={[styles.lcdText, isFidgetEnabled && styles.lcdTextDimmed]}
+            >
+              HIGH {String(highScore).padStart(5, '0')}
             </Text>
           </View>
 
@@ -93,7 +126,7 @@ export const RetroGameBoyUI = ({
             style={[styles.dpadBtn, styles.dpadUp]}
             onPress={() => onMove(Direction.UP)} //[span_3](start_span)[span_3](end_span)
           >
-            <ChevronUp color='#4f4f54' />
+            <ChevronUp color="#4f4f54" />
           </TouchableOpacity>
 
           <View style={styles.dpadHorizontalRow}>
@@ -102,7 +135,7 @@ export const RetroGameBoyUI = ({
               style={[styles.dpadBtn, styles.dpadLeft]}
               onPress={() => onMove(Direction.LEFT)} //[span_4](start_span)[span_4](end_span)
             >
-              <ChevronLeft color='#4f4f54' />
+              <ChevronLeft color="#4f4f54" />
             </TouchableOpacity>
 
             {/* D-Pad Center Pivot */}
@@ -113,7 +146,7 @@ export const RetroGameBoyUI = ({
               style={[styles.dpadBtn, styles.dpadRight]}
               onPress={() => onMove(Direction.RIGHT)} //[span_5](start_span)[span_5](end_span)
             >
-              <ChevronRight color='#4f4f54' />
+              <ChevronRight color="#4f4f54" />
             </TouchableOpacity>
           </View>
 
@@ -122,7 +155,7 @@ export const RetroGameBoyUI = ({
             style={[styles.dpadBtn, styles.dpadDown]}
             onPress={() => onMove(Direction.DOWN)} //[span_6](start_span)[span_6](end_span)
           >
-            <ChevronDown color='#4f4f54' />
+            <ChevronDown color="#4f4f54" />
           </TouchableOpacity>
         </View>
 
@@ -133,14 +166,42 @@ export const RetroGameBoyUI = ({
             style={styles.pillButton}
             onPress={onTogglePause}
           >
-            <Text style={styles.pillButtonLabel}>{isPaused ? 'START' : 'PAUSE'}</Text>
+            {isPaused ? (
+              <Play color="#c8c3b8" size={16} />
+            ) : (
+              <Pause color="#c8c3b8" size={16} />
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.pillButton}
             onPress={toggleMute}
           >
-            <Text style={styles.pillButtonLabel}>{isMuted ? 'UNMUTE' : 'MUTE'}</Text>
+            {isMuted ? (
+              <VolumeX color="#c8c3b8" size={16} />
+            ) : (
+              <Volume2 color="#c8c3b8" size={16} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.pillButton}
+            onPress={toggleHaptics}
+          >
+            {hapticsEnabled ? (
+              <Vibrate color="#c8c3b8" size={16} />
+            ) : (
+              <VibrateOff color="#c8c3b8" size={16} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.pillButton}
+            onPress={toggleFidgetMode}
+          >
+            <Text style={styles.pillButtonLabel}>
+              {isFidgetEnabled ? 'GAME' : 'FIDGET'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -180,7 +241,7 @@ const styles = StyleSheet.create({
     // marginBottom: 4,
   },
   brandText: {
-    fontSize: 10,
+    fontSize: 16,
     fontWeight: '800',
     color: '#63605a',
     letterSpacing: 1.5,
@@ -216,8 +277,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#c42828',
     marginRight: 6,
   },
+  ledLightDimmed: {
+    opacity: 0.2,
+  },
   batteryText: {
-    fontSize: 7,
+    fontSize: 10,
     color: '#b5b4ba',
     fontWeight: '700',
   },
@@ -242,6 +306,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#0f380f', // DMG dark pixel tint[span_8](start_span)[span_8](end_span)
     letterSpacing: 0.5,
+  },
+  lcdTextDimmed: {
+    opacity: 0.4,
+    // color: '#8a9b7a', // Lighter, more muted color
   },
   blinkText: {
     color: '#1b2e1b', //[span_9](start_span)[span_9](end_span)
@@ -268,15 +336,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   dpadBtn: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#1b1b1f',
+    width: 68,
+    height: 68,
+    backgroundColor: '#2a2a2f',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0a0a0f',
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   dpadUp: {
     borderTopLeftRadius: 6,
@@ -297,9 +370,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
   },
   dpadCenter: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#1b1b1f',
+    width: 68,
+    height: 68,
+    backgroundColor: '#2a2a2f',
   },
   arrowIcon: {
     color: '#4f4f54',
@@ -308,21 +381,30 @@ const styles = StyleSheet.create({
   },
   pillButtonsContainer: {
     alignItems: 'center',
-    transform: [{ rotate: '-25deg' }],
+    // transform: [{ rotate: '-25deg' }],
     marginRight: 18,
   },
   pillButton: {
-    width: 58,
-    height: 20,
+    width: 64,
+    height: 24,
     borderRadius: 99,
-    backgroundColor: '#505058',
+    backgroundColor: '#595961',
+    borderWidth: 1.5,
+    borderColor: '#2a2a2f',
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2e2e33',
+    marginVertical: 8,
+    transform: [{ rotate: '-25deg' }],
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
   },
   pillButtonLabel: {
-    fontSize: 8,
+    fontSize: 12,
     fontWeight: '900',
     color: '#c8c3b8', //[span_11](start_span)[span_11](end_span)
   },
