@@ -51,7 +51,9 @@ export const RetroGameBoyUI = ({
   const [ledBlink, setLedBlink] = useState(true);
 
   const [temporaryStatus, setTemporaryStatus] = useState<string | null>(null);
-  const tempStatusTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tempStatusTimeoutRef = React.useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const showTemporaryStatus = (text: string) => {
     if (tempStatusTimeoutRef.current) {
@@ -85,7 +87,7 @@ export const RetroGameBoyUI = ({
   const handleToggleFidgetMode = () => {
     showTemporaryStatus(isFidgetEnabled ? 'FIDGET MODE OFF' : 'FIDGET MODE ON');
     toggleFidgetMode();
-  }
+  };
 
   useEffect(() => {
     if (isPaused) {
@@ -124,7 +126,9 @@ export const RetroGameBoyUI = ({
             <View
               style={[styles.ledLight, !ledBlink && styles.ledLightDimmed]}
             />
-            <Text style={styles.batteryText}>{temporaryStatus ?? statusText}</Text>
+            <Text style={styles.batteryText}>
+              {temporaryStatus ?? statusText}
+            </Text>
           </View>
           <View style={styles.optionControls}>
             <TouchableOpacity onPress={handleOptionsPress}>
