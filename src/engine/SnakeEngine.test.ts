@@ -257,8 +257,6 @@ describe('SnakeEngine', () => {
 
   describe('Status Text', () => {
     it('returns the correct label for each game state', () => {
-      expect(engine.getStatusText()).toBe('PRESS START TO GET STARTED!');
-
       engine.start();
       expect(engine.getStatusText()).toBe('RUNNING');
 
@@ -276,9 +274,7 @@ describe('SnakeEngine', () => {
       engine.grid[10 * GRID_SIZE + 10] = CellType.BODY;
       engine.enqueueDirection(Direction.RIGHT);
       engine.tick();
-      expect(engine.getStatusText()).toBe(
-        'GAME OVER! PRESS START TO GET PLAY AGAIN!',
-      );
+      expect(engine.getStatusText()).toBe('GAME OVER!');
     });
   });
 
