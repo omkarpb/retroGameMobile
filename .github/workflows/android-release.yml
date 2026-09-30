@@ -2,6 +2,16 @@ name: Android Release Build
 
 on:
   workflow_dispatch:
+    inputs:
+      version_code:
+        description: Android version code
+        required: true
+        type: number
+      
+      version_name:
+        description: User-facing version name
+        required: true
+        type: string
 
 jobs:
   build-android:
@@ -21,12 +31,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Restore React Native Audio API binaries
+        run: |
+          mkdir -p /tmp/rnaa-android-libs
+
+          curl -fL \
+            "https://github.com/software-mansion-labs/rn-audio-libs/releases/download/v3.1.0/android.zip" \
+            -o /tmp/rnaa-android-libs/android.zip
+
+          mkdir -p \
+            node_modules/react-native-audio-api/common/cpp/audioapi/external
+
+          unzip -o \
+            /tmp/rnaa-android-libs/android.zip \
+            -d node_modules/react-native-audio-api/common/cpp/audioapi/external
+
+          rm -rf \
+            node_modules/react-native-audio-api/common/cpp/audioapi/external/__MACOSX
+
+          test -f \
+            node_modules/react-native-audio-api/common/cpp/audioapi/external/android/arm64-v8a/libopusfile.a
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
 
       - name: Restore Android signing keystore
         run: |
@@ -39,7 +76,16 @@ jobs:
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease
+        run: |
+          ./gradlew bundleRelease \
+            -PVERSION_CODE=${{ inputs.version_code }} \
+            -PVERSION_NAME=${{ inputs.version_name }}
+            
+      - name: Deploy to Google Play Internal Testing
+        working-directory: android
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: bundle exec fastlane android internal
 
       - name: Upload Android AAB
         uses: actions/upload-artifact@v7

@@ -82,8 +82,13 @@ android {
         applicationId "com.retrogamemobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode project.hasProperty("VERSION_CODE")
+            ? VERSION_CODE.toInteger()
+            : 1
+
+        versionName project.hasProperty("VERSION_NAME")
+            ? VERSION_NAME
+            : "1.0.0"
     }
     signingConfigs {
         debug {
