@@ -1,0 +1,16 @@
+default_platform(:android)
+
+platform :android do
+  desc "Upload AAB to Google Play Internal Testing"
+
+  lane :internal do
+    upload_to_play_store(
+      track: "internal",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"],
+      skip_metadata: true,
+      skip_images: true,
+      skip_screenshots: true
+    )
+  end
+end
