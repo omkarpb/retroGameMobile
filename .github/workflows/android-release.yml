@@ -28,6 +28,23 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Check disk space before cleanup
+        run: df -h
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /opt/hostedtoolcache
+
+          sudo docker system prune -af || true
+
+          echo "Disk space after cleanup:"
+          df -h
+
       - name: Install dependencies
         run: npm ci
 
@@ -69,6 +86,13 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/retro-game-upload-key.keystore
 
+      - name: Check disk space before Android build
+        run: |
+          df -h
+          du -sh node_modules || true
+          du -sh ~/.gradle || true
+          du -sh android || true
+
       - name: Build signed Android AAB
         working-directory: android
         env:
@@ -80,7 +104,11 @@ jobs:
           ./gradlew bundleRelease \
             -PVERSION_CODE=${{ inputs.version_code }} \
             -PVERSION_NAME=${{ inputs.version_name }}
-            
+      
+      - name: Check disk space after Android build
+        if: always()
+        run: df -h
+
       - name: Deploy to Google Play Internal Testing
         working-directory: android
         env:
