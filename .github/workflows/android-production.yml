@@ -1,0 +1,34 @@
+name: Android Production Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  promote-production:
+    name: Promote Android to Production
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Verify Fastlane configuration
+        run: |
+          test -f android/fastlane/Fastfile
+          test -f android/fastlane/Appfile
+          echo "Fastlane configuration found"
+
+      - name: Promote Internal Testing release to Production
+        working-directory: android
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: bundle exec fastlane android production
