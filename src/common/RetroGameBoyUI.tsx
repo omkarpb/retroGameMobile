@@ -50,6 +50,45 @@ export const RetroGameBoyUI = ({
 }: RetroGameUIProps) => {
   const [ledBlink, setLedBlink] = useState(true);
 
+  const [temporaryStatus, setTemporaryStatus] = useState<string | null>(null);
+  const tempStatusTimeoutRef = React.useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+
+  const showTemporaryStatus = (text: string) => {
+    if (tempStatusTimeoutRef.current) {
+      clearTimeout(tempStatusTimeoutRef.current);
+    }
+    setTemporaryStatus(text);
+    tempStatusTimeoutRef.current = setTimeout(() => {
+      setTemporaryStatus(null);
+      tempStatusTimeoutRef.current = null;
+    }, 4000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tempStatusTimeoutRef.current) {
+        clearTimeout(tempStatusTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleToggleMute = () => {
+    showTemporaryStatus(isMuted ? 'UNMUTED' : 'MUTED');
+    toggleMute();
+  };
+
+  const handleToggleHaptics = () => {
+    showTemporaryStatus(hapticsEnabled ? 'VIBRATE OFF' : 'VIBRATE ON');
+    toggleHaptics();
+  };
+
+  const handleToggleFidgetMode = () => {
+    showTemporaryStatus(isFidgetEnabled ? 'FIDGET MODE OFF' : 'FIDGET MODE ON');
+    toggleFidgetMode();
+  };
+
   useEffect(() => {
     if (isPaused) {
       setLedBlink(true); // LED stays on when paused
@@ -87,7 +126,9 @@ export const RetroGameBoyUI = ({
             <View
               style={[styles.ledLight, !ledBlink && styles.ledLightDimmed]}
             />
-            <Text style={styles.batteryText}>{statusText}</Text>
+            <Text style={styles.batteryText}>
+              {temporaryStatus ?? statusText}
+            </Text>
           </View>
           <View style={styles.optionControls}>
             <TouchableOpacity onPress={handleOptionsPress}>
@@ -173,9 +214,10 @@ export const RetroGameBoyUI = ({
             )}
           </TouchableOpacity>
           <TouchableOpacity
+            testID="mute-button"
             activeOpacity={0.7}
             style={styles.pillButton}
-            onPress={toggleMute}
+            onPress={handleToggleMute}
           >
             {isMuted ? (
               <VolumeX color="#c8c3b8" size={16} />
@@ -184,9 +226,10 @@ export const RetroGameBoyUI = ({
             )}
           </TouchableOpacity>
           <TouchableOpacity
+            testID="haptics-button"
             activeOpacity={0.7}
             style={styles.pillButton}
-            onPress={toggleHaptics}
+            onPress={handleToggleHaptics}
           >
             {hapticsEnabled ? (
               <Vibrate color="#c8c3b8" size={16} />
@@ -197,7 +240,7 @@ export const RetroGameBoyUI = ({
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.pillButton}
-            onPress={toggleFidgetMode}
+            onPress={handleToggleFidgetMode}
           >
             <Text style={styles.pillButtonLabel}>
               {isFidgetEnabled ? 'GAME' : 'FIDGET'}
@@ -276,9 +319,10 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: '#c42828',
     marginRight: 6,
+    opacity: 0.2,
   },
   ledLightDimmed: {
-    opacity: 0.2,
+    opacity: 1,
   },
   batteryText: {
     fontSize: 10,
