@@ -281,9 +281,10 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   batteryText: {
+    fontFamily: 'PressStart2P-Regular',
     fontSize: 10,
     color: '#b5b4ba',
-    fontWeight: '700',
+    // fontWeight: '700',
   },
   optionControls: {
     flexDirection: 'row',
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   lcdText: {
-    fontFamily: 'monospace',
+    fontFamily: 'PressStart2P-Regular',
     fontWeight: '700',
     fontSize: 11,
     color: '#0f380f', // DMG dark pixel tint[span_8](start_span)[span_8](end_span)

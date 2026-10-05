@@ -19,7 +19,7 @@ export const InfoModal = ({ visible, onClose }: InfoModalProps) => {
           <Text style={styles.title}>HOW TO PLAY</Text>
           <Text style={styles.body}>
             Use the D-Pad to steer the snake. Eat pixels to grow and score
-            points. Avoid hitting the walls or yourself!
+            points. Avoid hitting yourself!
           </Text>
           <Text style={styles.body}>
             Feeling stressed? Flip on FIDGET mode! Your snake keeps gliding
