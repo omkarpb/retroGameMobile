@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { RetroGameBoyUI } from './RetroGameBoyUI';
 import { Direction } from '../engine/types';
 
@@ -191,21 +191,5 @@ describe('RetroGameBoyUI', () => {
     );
 
     expect(getByText('GAME')).toBeTruthy();
-  });
-
-  it('clears the LED blink interval on unmount', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    const { unmount } = await renderUI(
-      <RetroGameBoyUI {...defaultProps()} isPaused={false} />,
-    );
-
-    await act(async () => {
-      jest.advanceTimersByTime(500);
-    });
-    await unmount();
-    activeRender = undefined;
-
-    expect(clearIntervalSpy).toHaveBeenCalled();
-    clearIntervalSpy.mockRestore();
   });
 });

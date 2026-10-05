@@ -167,7 +167,7 @@ export class SnakeEngine {
     } else if (this.state === GameState.RUNNING) {
       return 'RUNNING';
     } else if (this.state === GameState.GAME_OVER) {
-      return 'GAME OVER! PRESS START TO GET PLAY AGAIN!';
+      return 'GAME OVER!';
     } else {
       return 'PRESS START TO GET STARTED!';
     }
